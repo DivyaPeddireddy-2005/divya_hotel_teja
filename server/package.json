@@ -7,11 +7,16 @@
     "server": "nodemon server.js",
     "start": "node server.js"
   },
-  "keywords": ["node", "express", "backend"],
+  "keywords": [
+    "node",
+    "express",
+    "backend"
+  ],
   "author": "Your Name",
   "license": "MIT",
   "type": "module",
   "dependencies": {
+    "@clerk/express": "^1.7.60",
     "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

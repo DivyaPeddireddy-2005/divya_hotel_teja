@@ -77,6 +77,9 @@ import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 import connectDB from "./configs/db.js";
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
+import roomRoutes from "./routes/roomRoutes.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
+import hotelRoutes from "./routes/hotelRoutes.js";
 
 const app = express();
 
@@ -97,6 +100,11 @@ app.use(clerkMiddleware());
 app.get("/", (req, res) => {
   res.status(200).send("api is working");
 });
+
+// Routes
+app.use("/api/rooms", roomRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/hotels", hotelRoutes);
 
 // Clerk webhook
 app.use("/api/clerk", clerkWebhooks);
