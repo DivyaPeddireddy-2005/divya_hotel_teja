@@ -11,6 +11,7 @@ import Layout from './pages/hotelOwner/Layout'
 import AddRoom from './pages/hotelOwner/AddRoom'
 import ListRoom from './pages/hotelOwner/ListRoom'
 import Dashboard from './pages/hotelOwner/Dashboard'
+import CreateHotel from './pages/hotelOwner/CreateHotel'
 
 
 
@@ -30,6 +31,7 @@ const App = () => {
                 <Route index element={<Dashboard/>}/>
                 <Route path='add-room' element={<AddRoom/>}/>
                 <Route path='list-room' element={<ListRoom/>}/>
+                <Route path='create-hotel' element={<CreateHotel/>}/>
 
           </Route>
 

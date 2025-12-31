@@ -1,19 +1,26 @@
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Title from '../../components/Title'
 import { assets } from '../../assets/assets'
+import { roomsAPI, hotelsAPI } from '../../utils/api'
+import { useUser } from '@clerk/clerk-react'
+import { useNavigate } from 'react-router-dom'
 
 const AddRoom = () => {
+  const { isSignedIn } = useUser()
+  const navigate = useNavigate()
   const [images, setImages] = useState({
     1: null,
     2: null,
     3: null,
     4: null
   })
-
+  const [hotels, setHotels] = useState([])
+  const [loading, setLoading] = useState(false)
   const [inputs, setInputs] = useState({
+    hotelId: '',
     roomType: '',
-    pricePerNight: 0,
+    pricePerNight: '',
     amenities: {
       'Free WiFi': false,
       'Free Breakfast': false,
@@ -23,14 +30,129 @@ const AddRoom = () => {
     }
   })
 
+  useEffect(() => {
+    const fetchHotels = async () => {
+      if (!isSignedIn) return
+
+      try {
+        const response = await hotelsAPI.getOwnerHotels()
+        if (response.success) {
+          setHotels(response.hotels)
+          if (response.hotels.length > 0) {
+            setInputs(prev => ({ ...prev, hotelId: response.hotels[0]._id }))
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching hotels:', error)
+      }
+    }
+
+    fetchHotels()
+  }, [isSignedIn])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    if (!inputs.hotelId || !inputs.roomType || !inputs.pricePerNight) {
+      alert('Please fill in all required fields')
+      return
+    }
+
+    try {
+      setLoading(true)
+
+      // Prepare form data for images
+      const formData = new FormData()
+      formData.append('hotelId', inputs.hotelId)
+      formData.append('roomType', inputs.roomType)
+      formData.append('pricePerNight', inputs.pricePerNight)
+
+      // Add selected amenities
+      const selectedAmenities = Object.keys(inputs.amenities).filter(key => inputs.amenities[key])
+      selectedAmenities.forEach(amenity => {
+        formData.append('amenities', amenity)
+      })
+
+      // Add images
+      Object.values(images).forEach((image, index) => {
+        if (image) {
+          formData.append('images', image)
+        }
+      })
+
+      // For now, we'll use the API without images since the backend might not handle multipart yet
+      const roomData = {
+        hotelId: inputs.hotelId,
+        roomType: inputs.roomType,
+        pricePerNight: parseInt(inputs.pricePerNight),
+        amenities: selectedAmenities,
+        images: [] // Placeholder for now
+      }
+
+      const response = await roomsAPI.create(roomData)
+
+      if (response.success) {
+        alert('Room added successfully!')
+        navigate('/list-rooms')
+      } else {
+        alert(response.message || 'Failed to add room')
+      }
+    } catch (error) {
+      console.error('Error adding room:', error)
+      alert('Failed to add room. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className='mt-14'>
+        <Title align='center' title='Access Denied' subTitle='Please sign in as a hotel owner to add rooms' />
+      </div>
+    )
+  }
+
+  if (hotels.length === 0) {
+    return (
+      <div className='mt-14'>
+        <Title align='center' title='No Hotels Found' subTitle='You need to create a hotel first before adding rooms' />
+        <div className='text-center mt-4'>
+          <button
+            onClick={() => navigate('/create-hotel')}
+            className='bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600'
+          >
+            Create Hotel
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <form className='mt-14'>
+    <form onSubmit={handleSubmit} className='mt-14'>
       <Title
         align="left"
         font="outfit"
         title="Add Room"
         subTitle="Fill in the details carefully and provide accurate room details, pricing, and amenities to enhance the user booking experience."
       />
+
+      {/* Hotel Selection */}
+      <div className="mt-4">
+        <p className="text-gray-800">Select Hotel</p>
+        <select
+          value={inputs.hotelId}
+          onChange={(e) => setInputs({ ...inputs, hotelId: e.target.value })}
+          className="border opacity-70 border-gray-300 mt-1 rounded p-2 w-full max-w-xs"
+          required
+        >
+          <option value="">Select Hotel</option>
+          {hotels.map(hotel => (
+            <option key={hotel._id} value={hotel._id}>{hotel.name}</option>
+          ))}
+        </select>
+      </div>
 
       {/* Upload area for images */}
       <p className="text-gray-800 mt-10">Images</p>
@@ -111,8 +233,12 @@ const AddRoom = () => {
       </div>
 
       {/* Submit button */}
-      <button className="bg-primary text-white px-8 py-2 rounded mt-8 cursor-pointer">
-        Add Room
+      <button
+        type="submit"
+        disabled={loading}
+        className="bg-primary text-white px-8 py-2 rounded mt-8 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loading ? 'Adding Room...' : 'Add Room'}
       </button>
     </form>
   )

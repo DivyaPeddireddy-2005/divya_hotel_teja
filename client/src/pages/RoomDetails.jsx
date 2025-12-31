@@ -1,27 +1,103 @@
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { assets, facilityIcons, roomCommonData, roomsDummyData } from '../assets/assets'
+import { useParams, useNavigate } from 'react-router-dom'
+import { assets, facilityIcons } from '../assets/assets'
 import StarRating from '../components/StarRating'
+import { roomsAPI, bookingsAPI } from '../utils/api'
+import { useUser } from '@clerk/clerk-react'
 
 const RoomDetails = () => {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const { user, isSignedIn } = useUser()
   const [room, setRoom] = useState(null)
   const [mainImage, setMainImage] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [bookingData, setBookingData] = useState({
+    checkIn: '',
+    checkOut: '',
+    guests: 1
+  })
+  const [bookingLoading, setBookingLoading] = useState(false)
 
   useEffect(() => {
-    const foundRoom = roomsDummyData.find(r => r._id === id)
-    if (foundRoom) {
-      setRoom(foundRoom)
-      setMainImage(foundRoom.images[0])
+    const fetchRoom = async () => {
+      try {
+        const response = await roomsAPI.getById(id)
+        if (response.success) {
+          setRoom(response.room)
+          setMainImage(response.room.images[0])
+        }
+      } catch (error) {
+        console.error('Error fetching room:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (id) {
+      fetchRoom()
     }
   }, [id])
 
-  return room && (
+  const handleBooking = async (e) => {
+    e.preventDefault()
+
+    if (!isSignedIn) {
+      alert('Please sign in to make a booking')
+      return
+    }
+
+    if (!bookingData.checkIn || !bookingData.checkOut) {
+      alert('Please select check-in and check-out dates')
+      return
+    }
+
+    try {
+      setBookingLoading(true)
+      const response = await bookingsAPI.create({
+        roomId: id,
+        checkInDate: bookingData.checkIn,
+        checkOutDate: bookingData.checkOut,
+        guests: bookingData.guests,
+        paymentMethod: 'Pay At Hotel' // Default payment method
+      })
+
+      if (response.success) {
+        alert('Booking created successfully!')
+        navigate('/bookings')
+      } else {
+        alert(response.message || 'Failed to create booking')
+      }
+    } catch (error) {
+      console.error('Booking error:', error)
+      alert('Failed to create booking. Please try again.')
+    } finally {
+      setBookingLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="py-28 md:py-36 px-4 md:px-16 lg:px-24 xl:px-32">
+        <div className="text-center">Loading room details...</div>
+      </div>
+    )
+  }
+
+  if (!room) {
+    return (
+      <div className="py-28 md:py-36 px-4 md:px-16 lg:px-24 xl:px-32">
+        <div className="text-center">Room not found</div>
+      </div>
+    )
+  }
+
+  return (
     <div className="py-28 md:py-36 px-4 md:px-16 lg:px-24 xl:px-32">
       {/* room details */}
       <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
         <h1 className="text-3xl md:text-4xl font-playfair">
-          {room.hotel.name}{' '}
+          {room.hotel?.name || 'Hotel Name'}{' '}
           <span className="font-inter text-sm">{room.roomType}</span>
         </h1>
         <p className="text-xs font-inter py-1.5 px-3 text-white bg-orange-500 rounded-full">
@@ -38,7 +114,7 @@ const RoomDetails = () => {
       {/* room address */}
       <div className="flex items-center gap-1 text-gray-500 mt-2">
         <img src={assets.locationIcon} alt="location-icon" className="w-4 h-4" />
-        <span>{room.hotel.address}</span>
+        <span>{room.hotel?.address || 'Address not available'}</span>
       </div>
 
       {/* room images */}
@@ -88,13 +164,15 @@ const RoomDetails = () => {
       </div>
 
       {/* checkin checkout form */}
-      <form className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white shadow-[0px_0px_20px_rgba(0,0,0,0.15)] p-6 rounded-xl mx-auto mt-16 w-full">
+      <form onSubmit={handleBooking} className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white shadow-[0px_0px_20px_rgba(0,0,0,0.15)] p-6 rounded-xl mx-auto mt-16 w-full">
         <div className="flex flex-col flex-wrap md:flex-row items-start md:items-center gap-4 md:gap-10 text-gray-500">
           <div className="flex flex-col">
             <label htmlFor="checkInDate" className="font-medium">Check-In</label>
             <input
               type="date"
               id="checkInDate"
+              value={bookingData.checkIn}
+              onChange={(e) => setBookingData(prev => ({ ...prev, checkIn: e.target.value }))}
               className="w-full rounded border border-gray-300 px-3 py-2 mt-1.5 outline-none"
               required
             />
@@ -106,6 +184,8 @@ const RoomDetails = () => {
             <input
               type="date"
               id="checkOutDate"
+              value={bookingData.checkOut}
+              onChange={(e) => setBookingData(prev => ({ ...prev, checkOut: e.target.value }))}
               className="w-full rounded border border-gray-300 px-3 py-2 mt-1.5 outline-none"
               required
             />
@@ -117,6 +197,10 @@ const RoomDetails = () => {
             <input
               type="number"
               id="guests"
+              min="1"
+              max="4"
+              value={bookingData.guests}
+              onChange={(e) => setBookingData(prev => ({ ...prev, guests: parseInt(e.target.value) }))}
               className="w-full rounded border border-gray-300 px-3 py-2 mt-1.5 outline-none"
               required
             />
@@ -124,9 +208,10 @@ const RoomDetails = () => {
         </div>
         <button
           type="submit"
-          className="bg-primary hover:bg-primary-dull active:scale-95 transition-all text-white rounded-md max-md:w-full max-md:mt-6 md:px-8 py-3 md:py-4 text-base cursor-pointer"
+          disabled={bookingLoading}
+          className="bg-primary hover:bg-primary-dull active:scale-95 transition-all text-white rounded-md max-md:w-full max-md:mt-6 md:px-8 py-3 md:py-4 text-base cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Check Availability
+          {bookingLoading ? 'Creating Booking...' : 'Book Now'}
         </button>
       </form>
 

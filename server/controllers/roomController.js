@@ -29,6 +29,7 @@ export const getRoomById = async (req, res) => {
 export const addRoom = async (req, res) => {
     try {
         const { hotelId, roomType, pricePerNight, amenities, images } = req.body;
+        const owner = req.auth.userId; // From Clerk middleware
 
         // Verify hotel ownership
         const hotel = await Hotel.findById(hotelId);
@@ -36,8 +37,9 @@ export const addRoom = async (req, res) => {
             return res.json({ success: false, message: "Hotel not found" });
         }
 
-        // Check if user is the owner (you might want to add Clerk auth check here)
-        // For now, assuming the request has user info
+        if (hotel.owner.toString() !== owner) {
+            return res.json({ success: false, message: "Unauthorized: You can only add rooms to your own hotels" });
+        }
 
         const room = new Room({
             hotel: hotelId,
