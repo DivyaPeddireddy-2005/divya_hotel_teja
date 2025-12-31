@@ -72,10 +72,11 @@
 
 
 import express from "express";
+import "dotenv/config";
 import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 import connectDB from "./configs/db.js";
-import clerkWebhooks from "./controllers/clerkWebhook.js";
+import clerkWebhooks from "./controllers/clerkWebhooks.js";
 
 const app = express();
 
@@ -86,20 +87,26 @@ app.use("/api/clerk", express.raw({ type: "application/json" }));
 app.use(express.json());
 app.use(cors());
 
-// Connect DB
-connectDB();
+// Connect DB (don't let it crash the app)
+connectDB().catch(err => console.log('DB connection failed:', err.message));
 
 // Clerk middleware
 app.use(clerkMiddleware());
 
 // Test route
 app.get("/", (req, res) => {
-  res.status(200).send("API is running 🚀");
+  res.status(200).send("api is working");
 });
 
 // Clerk webhook
 app.use("/api/clerk", clerkWebhooks);
 
-// ❌ REMOVE app.listen()
+// For local testing only
+const PORT = process.env.PORT || 3000;
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+// ❌ REMOVE app.listen() for Vercel
 // ✅ EXPORT app for Vercel
 export default app;
