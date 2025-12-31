@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { assets, facilityIcons } from '../assets/assets'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import StarRating from '../components/StarRating';
 import { roomsAPI } from '../utils/api';
 
@@ -26,10 +26,18 @@ const RadioButton=({label,selected=false,onChange=()=>{ }})=>{
 
 const AllRooms = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [openFilters, setOpenFilters] = useState(false);
     const [rooms, setRooms] = useState([]);
+    const [filteredRooms, setFilteredRooms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // Get search parameters
+    const destination = searchParams.get('destination');
+    const checkIn = searchParams.get('checkIn');
+    const checkOut = searchParams.get('checkOut');
+    const guests = searchParams.get('guests');
 
     const roomTypes = [
         "Single Bed",
@@ -58,6 +66,7 @@ const AllRooms = () => {
                 const response = await roomsAPI.getAll();
                 if (response.success) {
                     setRooms(response.rooms);
+                    setFilteredRooms(response.rooms);
                 } else {
                     setError('Failed to load rooms');
                 }
@@ -72,12 +81,43 @@ const AllRooms = () => {
         fetchRooms();
     }, []);
 
+    // Filter rooms based on search parameters
+    useEffect(() => {
+        let filtered = [...rooms];
+
+        if (destination) {
+            filtered = filtered.filter(room =>
+                room.hotel?.city?.toLowerCase().includes(destination.toLowerCase()) ||
+                room.hotel?.name?.toLowerCase().includes(destination.toLowerCase())
+            );
+        }
+
+        // You can add more filtering logic here for dates, guests, etc.
+        // For now, we'll just filter by destination
+
+        setFilteredRooms(filtered);
+    }, [rooms, destination, checkIn, checkOut, guests]);
+
   return (
     <div className='flex flex-col-reverse lg:flex-row items-start justify-between pt-28 md:pt-35 px-4 md:px-16 lg:px-24 xl:px-32'>
        <div>
         <div className='flex flex-col items-start text-left'>
             <h1 className='font-playfair text-4xl md:text-[40px]'>Hotel Rooms</h1>
             <p className='text-sm md:text-base text-gray-500/90 mt-2 max-w-174'>Take advantage of our limited-time offers and special packages to enhance your stay and create unforgettable memories.</p>
+
+            {/* Search Summary */}
+            {(destination || checkIn || checkOut) && (
+                <div className='mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200'>
+                    <h3 className='font-semibold text-blue-800 mb-2'>Search Results for:</h3>
+                    <div className='flex flex-wrap gap-4 text-sm text-blue-700'>
+                        {destination && <span><strong>Destination:</strong> {destination}</span>}
+                        {checkIn && <span><strong>Check-in:</strong> {new Date(checkIn).toLocaleDateString()}</span>}
+                        {checkOut && <span><strong>Check-out:</strong> {new Date(checkOut).toLocaleDateString()}</span>}
+                        {guests && <span><strong>Guests:</strong> {guests}</span>}
+                    </div>
+                    <p className='text-xs text-blue-600 mt-2'>Found {filteredRooms.length} room{filteredRooms.length !== 1 ? 's' : ''}</p>
+                </div>
+            )}
         </div>
 
         {loading ? (
@@ -88,12 +128,14 @@ const AllRooms = () => {
             <div className="flex justify-center items-center py-20">
                 <div className="text-red-500 text-lg">{error}</div>
             </div>
-        ) : rooms.length === 0 ? (
+        ) : filteredRooms.length === 0 ? (
             <div className="flex justify-center items-center py-20">
-                <div className="text-lg text-gray-500">No rooms available</div>
+                <div className="text-lg text-gray-500">
+                    {destination ? `No rooms found for "${destination}"` : 'No rooms available'}
+                </div>
             </div>
         ) : (
-            rooms.map((room) => (
+            filteredRooms.map((room) => (
                 <div key={room._id} className='flex flex-col md:flex-row items-start py-10 gap-6 border-b border-gray-300 last:pb-30 last:border-b-0'>
                     <img onClick={() => { navigate(`/rooms/${room._id}`); scrollTo(0, 0) }} src={room.images[0]} alt=""
                         title='View Room Details' className='max-h-65 md:w-1/2 rounded-xl shadow-lg object-cover cursor-pointer' />
