@@ -270,7 +270,7 @@ const AddRoom = () => {
       {/* Upload area for images */}
       <p className="text-gray-800 mt-10">All Rooms</p>
 
-      <div className="w-full max-w-3xl text-left border border-gray-300 rounded-lg max-h-80 overflow-y-scroll mt-3">
+      <div className="w-full text-left border border-gray-300 rounded-lg max-h-80 overflow-y-scroll mt-3">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>

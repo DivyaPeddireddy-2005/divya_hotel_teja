@@ -25,7 +25,7 @@ const Title = ({ title, subTitle, align, font }) => {
       <h1 className={`text-4xl md:text-[40px] ${font || 'font-playfair'}`}>
         {title}
       </h1>
-      <p className="text-sm md:text-base text-gray-500/90 mt-2 max-w-[700px]">
+      <p className="text-sm md:text-base text-gray-500/90 mt-2 max-w-[1400px]">
         {subTitle}
       </p>
     </div>

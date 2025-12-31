@@ -4,7 +4,7 @@ import { assets, cities } from '../assets/assets'
 const HotelReg = () => {
   return (
     <div className='fixed top-0 bottom-0 left-0 right-0 z-100 flex items-center justify-center bg-black/70'>
-        <form className='flex bg-white rounded-xl max-w-4xl max-md:mx-2'>
+        <form className='flex bg-white rounded-xl w-full max-w-[95vw] max-md:mx-2'>
             <img src={assets.regImage} alt="reg-image" className='w-1/2 rounded-xl hiddenmd:block' />
 
             <div className='relative flex flex-col items-center md:w-1/2 p-8 md:p-10'>

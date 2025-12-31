@@ -88,7 +88,7 @@ const RoomDetails = () => {
       </div>
 
       {/* checkin checkout form */}
-      <form className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white shadow-[0px_0px_20px_rgba(0,0,0,0.15)] p-6 rounded-xl mx-auto mt-16 max-w-6xl">
+      <form className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white shadow-[0px_0px_20px_rgba(0,0,0,0.15)] p-6 rounded-xl mx-auto mt-16 w-full">
         <div className="flex flex-col flex-wrap md:flex-row items-start md:items-center gap-4 md:gap-10 text-gray-500">
           <div className="flex flex-col">
             <label htmlFor="checkInDate" className="font-medium">Check-In</label>
@@ -144,7 +144,7 @@ const RoomDetails = () => {
       </div>
 
       {/* description */}
-      <div className="max-w-3xl border-y border-gray-300 my-16 py-10 text-gray-500">
+      <div className="w-full border-y border-gray-300 my-16 py-10 text-gray-500">
         <p>
           Guests will be allocated on the ground floor according to availability. You will enjoy a comfortable two‑bedroom apartment that offers a true city feeling. The price quoted is for two guests; please mark the number of guests in the booking slot to get the exact price for groups. Guests will be allocated to the ground floor based on availability, and you will have a cozy two‑bedroom apartment with an authentic city atmosphere.
         </p>

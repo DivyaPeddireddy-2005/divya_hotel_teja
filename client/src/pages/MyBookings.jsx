@@ -115,7 +115,7 @@ const MyBookings = () => {
         align="left"
       />
 
-      <div className="max-w-6xl mt-8 w-full text-gray-800">
+      <div className="w-full mt-8 text-gray-800">
         <div className="hidden md:grid md:grid-cols-3 w-full border-b border-gray-300 font-medium text-base py-3">
           <div className='pl-18'>Hotels</div>
           <div className='pl-40 '>Date & Time</div>
